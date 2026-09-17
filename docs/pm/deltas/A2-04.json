@@ -7,7 +7,12 @@
     "kernels": "c89f69b10287c165c81b3ad79c98c22468c1b443",
     "agent": "a260cb7cc25949a46a9bc56a79af78aebdbfb058",
     "decision": "D-PM-13",
-    "note": "docs/matrix/ops.json ascriptor_pin (library 77619116, 0.1.0.dev1) is not obtainable; these conclusions belong to library 627f55f / kernels c89f69b."
+    "note": "Conclusions obtained on library 627f55f / kernels c89f69b (pin at D-PM-13). The current compatibility pin is library 90cfcdc / kernels b3b3f9c; kda_fwd/kernels/recurrent.py is byte-identical between c89f69b and b3b3f9c (the unit differs only in README.md and kernels/triangular_inverse.py, not exercised). Key results were re-checked on the current pin with identical verdicts. The older ops.json ascriptor_pin (library 77619116, 0.1.0.dev1) is not obtainable.",
+    "current_compatibility_pin": {
+      "library": "90cfcdc",
+      "kernels": "b3b3f9c",
+      "agent": "a6275c9"
+    }
   },
   "evidence_nature": "Host-side a5 pipe-model values (pipesim + schedule replay), not hardware measurements. Hardware comparisons cite existing Ascend950PR records already in gaps.json.",
   "gaps": {
@@ -20,7 +25,9 @@
       "append": {
         "evidence": "**根因定位（A2-04，#30 / PR #60，library 627f55f / kernels c89f69b，a5 管线模型值）**：pipesim 报出的冒险全部是\"本头的 Aqk L1 读（:398）↔ 同核下一头的 Aqk L1 写（:245）\"无序，条数与归因逐格相等、无其它冒险。按调度回放 o：真机失效表 12/12 格逐头吻合（逐位正确的头 = 表中对的头）。用 verify_real_shapes.py 同款输入（跨度 46）预测：kimi H32/HV32/C1/bd4 整体 o 相对 L2 1.060（本条记录 1.06），H1/HV8/C1/bd1 为 2.721e-01（本条记录 2.721e-01），kimi final_state 2.458e-03（本条记录 2.46e-03）；错头 |o|/|ref| 0.9254~1.1319、全部有限。**C≥2 全对的原因不是\"chunk 循环第二遍补上了同步\"**：C 为偶数时相邻两次写的槽交替，信用数与槽数匹配；C 为奇数时每次换头相撞一次。L0C 输出握手各头一致，与缺陷无关。修补（aqk-only 槽轮转）在模型中 43/43 格与奇数 C 12/12 格冒险 0、全头正确，偶数 C 格与上游逐位相同；负对照（只改 q/qg 槽）不起作用。"
       },
-      "keep": ["requires_kernel_change"]
+      "keep": [
+        "requires_kernel_change"
+      ]
     }
   },
   "summary_kernel_fix_queue": "no change (c1-multihead-o-corrupt stays queued; requires_kernel_change stays true)",
